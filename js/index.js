@@ -1,6 +1,7 @@
 var weekNum=1;
-var courseTitle="";
+var courseTitle="Scene & Basic Script Control";
 var courseInfo=[
+	"09 / 25 (Tue.) 18:00 ~ 21:00"
 ];
 var announcement=[
 	"請各位同學務必攜帶自己的筆電並安裝好以下軟體（要下載很久所以請務必先安裝好）：",
