@@ -1,5 +1,5 @@
 var lectures = [
-	//{ title: "Week 1 Morning: Introduction to Unity & C#", img: "./art/week1_1.png", slideshow: "./file/Unity_week1_20171118_1.pdf", video: "https://youtu.be/AmkUnDn_8nk" },
+	{ title: "Week 1 : Scene & Basic Script Control", img: "./art/week1_1.png", slideshow: "https://drive.google.com/drive/folders/1qhhO8wX5n5sx7rKV4JJ1-Bj7jdY367iD?usp=sharing", video: "" },
     //{ title: "Week 1 Afternoon: UI & Framework & IO of Unity", img: "./art/week1_2.jpg", slideshow: "https://drive.google.com/drive/folders/1t8DBTIkhPngyvW-4E8aauTdjE93i-Dkp?usp=sharing", video: "https://youtu.be/P3cT9mnVmw0" },
     //{ title: "Week 2 Morning: 2D Game Design", img: "./art/week2_1.jpg", slideshow: "https://drive.google.com/drive/u/1/folders/1Y11uizGPH16g3wzjThWrSzX_ND9KXkFj", video: "https://youtu.be/e-BnlTutzuQ" },
     //{ title: "Week 2 Afternoon: UI Design", img: "./art/week2_2.jpg", slideshow: "https://drive.google.com/drive/u/1/folders/1Y11uizGPH16g3wzjThWrSzX_ND9KXkFj", video: "https://youtu.be/hOwHyOFNACU" },
