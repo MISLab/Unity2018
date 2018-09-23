@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="CACHE-CONTROL" content="NO-CACHE">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>Post-processing</title>
+		<style type="text/css">
+			html, body{
+				padding:0;
+				margin:0;
+				height:100%;
+				overflow:hidden;
+			}
+		</style>
+		<script type="text/javascript" src="../js/mat4.js"></script>
+		<script id="fragmentShader" type="x-shader/x-fragment">
+			precision mediump float;
+			varying vec4 outColor;
+			void main(void){
+				gl_FragColor=outColor;
+			}
+		</script>
+		<script id="vertexShader" type="x-shader/x-vertex">
+			attribute vec3 vertexPosition;
+			attribute vec3 vertexNormal;
+			uniform vec3 color;
+			uniform mat4 pMatrix;
+			uniform mat4 mVMatrix;
+			varying vec4 outColor;
+			void main(void){
+				gl_Position=pMatrix*mVMatrix*vec4(vertexPosition, 1.0);
+				outColor=vec4(color, 1.0);
+			}
+		</script>
+		<script>
+			var vertex=[-1, -1, 0,
+			-1, 1, 0,
+			1, 1, 0,
+			1, -1, 0];
+			var vertexIndex=[0, 1, 2, 0, 3, 2];
+		</script>
+		<script id="postF" type="x-shader/x-fragment">
+			precision mediump float;
+			uniform float intensity;
+			uniform sampler2D sampler;
+			varying vec2 coord;
+			void main(void){
+				float radius=distance(coord, vec2(0.5, 0.5))*intensity;
+				vec2 spinCoord;
+				vec2 coordO=coord-vec2(0.5, 0.5);
+				coordO=coordO*0.8;
+				spinCoord=vec2(cos(radius)*coordO.x-sin(radius)*coordO.y, sin(radius)*coordO.x+cos(radius)*coordO.y);
+				coordO=spinCoord+vec2(0.5, 0.5);
+				gl_FragColor=texture2D(sampler, coordO);
+			}
+		</script>
+		<script id="postV" type="x-shader/x-vertex">
+			attribute vec3 vertexPosition;
+			uniform mat4 mVMatrix;
+			varying vec2 coord;
+			void main(void){
+				gl_Position=vec4(vertexPosition, 1.0);
+				vec4 tempCoord=vec4(vertexPosition, 1.0);
+				tempCoord=tempCoord/vec4(2.0, 2.0, 1.0, 1.0);
+				tempCoord=mVMatrix*tempCoord;
+				tempCoord=tempCoord+vec4(0.5, 0.5, 0.0, 0.0);
+				//coord=(vertexPosition.xy+vec2(1.0, 1.0))/2.0;
+				coord=tempCoord.xy;
+			}
+		</script>
+	</head>
+	<body>
+		<canvas id="canvas" style="width:100%;height:100%;"></canvas>
+		<script type="text/javascript">
+			var canvas=document.getElementById("canvas");
+			var vertexBuffer, indexBuffer;
+			var frameBuffer, texture, renderBuffer;
+			var programShader, postPS;
+			var colorMode=1;
+			var lines=[];
+			var gl;
+			var startDate;
+			function initialize(){
+				gl=canvas.getContext("webgl")||canvas.getContext("experimental-webgl");
+				initShaders();
+				initBuffers();
+				initTextureBuffer();
+				gl.clearColor(0.0, 0.0, 0.0, 1.0);
+				gl.enable(gl.DEPTH_TEST);
+				startDate=new Date();
+				window.requestAnimationFrame(draw);
+			}
+
+			function initShaders(){
+				var fragmentShader=getShader(gl, "fragmentShader", "fragmentShader");
+				var vertexShader=getShader(gl, "vertexShader", "vertexShader");
+				programShader=gl.createProgram();
+				gl.attachShader(programShader, vertexShader);
+				gl.attachShader(programShader, fragmentShader);
+				gl.linkProgram(programShader);
+				if(!gl.getProgramParameter(programShader, gl.LINK_STATUS)){
+					console.log("failed to initialize programShader shaderProgram.");
+				}
+				programShader.vertexPositionAttribute=gl.getAttribLocation(programShader, "vertexPosition");
+				programShader.pMatrix=gl.getUniformLocation(programShader, "pMatrix");
+				programShader.mVMatrix=gl.getUniformLocation(programShader, "mVMatrix");
+				programShader.color=gl.getUniformLocation(programShader, "color");
+
+				fragmentShader=getShader(gl, "postF", "fragmentShader");
+				vertexShader=getShader(gl, "postV", "vertexShader");
+				postPS=gl.createProgram();
+				gl.attachShader(postPS, vertexShader);
+				gl.attachShader(postPS, fragmentShader);
+				gl.linkProgram(postPS);
+				if(!gl.getProgramParameter(postPS, gl.LINK_STATUS)){
+					console.log("failed to initialize postPS shaderProgram.");
+				}
+				postPS.vertexPositionAttribute=gl.getAttribLocation(postPS, "vertexPosition");
+				postPS.samplerUniform=gl.getUniformLocation(postPS, "sampler");
+				postPS.intensity=gl.getUniformLocation(postPS, "intensity");
+				postPS.mVMatrix=gl.getUniformLocation(postPS, "mVMatrix");
+			}
+
+			function getShader(gl ,id, shaderType){
+				var shaderScript = document.getElementById(id);
+     			if (!shaderScript) {
+        			return null;
+				}
+				var str="";
+				var a=shaderScript.firstChild;
+				while(a){
+					if(a.nodeType==3){
+						str+=a.textContent;
+					}
+					a=a.nextSibling;
+				}
+				var shader;
+				if(shaderType=="fragmentShader"){
+					shader = gl.createShader(gl.FRAGMENT_SHADER);
+				}else if(shaderType=="vertexShader"){
+					shader = gl.createShader(gl.VERTEX_SHADER);
+				}else{
+					return null;
+				}
+				gl.shaderSource(shader, str);
+				gl.compileShader(shader);
+				if(!gl.getShaderParameter(shader, gl.COMPILE_STATUS)){
+					console.log(gl.getShaderInfoLog(shader));
+					return null;
+				}
+				return shader;
+			}
+
+			function initBuffers(){
+				vertexBuffer=gl.createBuffer();
+				gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+				gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertex),gl.STATIC_DRAW);
+				indexBuffer=gl.createBuffer();
+				gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+				gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(vertexIndex), gl.STATIC_DRAW);
+			}
+
+			function initTextureBuffer() {
+				frameBuffer=gl.createFramebuffer();
+				gl.bindFramebuffer(gl.FRAMEBUFFER, frameBuffer);
+				frameBuffer.width=2048;
+				frameBuffer.height=2048;
+				texture=gl.createTexture();
+				gl.bindTexture(gl.TEXTURE_2D, texture);
+				gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+				gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+				gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, frameBuffer.width, frameBuffer.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+				//gl.generateMipmap(gl.TEXTURE_2D);
+				renderBuffer=gl.createRenderbuffer();
+				gl.bindRenderbuffer(gl.RENDERBUFFER, renderBuffer);
+				gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, frameBuffer.width, frameBuffer.height);
+				gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
+				gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, renderBuffer);
+				gl.bindTexture(gl.TEXTURE_2D, null);
+				gl.bindRenderbuffer(gl.RENDERBUFFER, null);
+				gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+			}
+
+			function draw(){
+				var centerZ=0.0;
+				var devicePixelRatio=window.devicePixelRatio||1;
+				var width = gl.canvas.clientWidth*devicePixelRatio;
+				var height = gl.canvas.clientHeight*devicePixelRatio;
+				var currentDate=new Date();
+				var lightDir=[-1, 0, -1];
+				var mVMatrix;
+				gl.canvas.width=width;
+				gl.canvas.height=height;
+				
+				gl.bindFramebuffer(gl.FRAMEBUFFER, frameBuffer);
+				gl.viewport(0, 0, frameBuffer.width, frameBuffer.height);
+				var pMatrix=mat4.perspective(mat4.create(), Math.PI/5, width/height, 0.1, -3000);
+				mat4.translate(pMatrix, pMatrix, [0, 0, -20]);
+				gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+				gl.useProgram(programShader);
+				gl.enableVertexAttribArray(programShader.vertexPositionAttribute);
+				
+				gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+				gl.vertexAttribPointer(programShader.vertexPositionAttribute, 3, gl.FLOAT, false, 0, 0);
+				gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+				gl.uniformMatrix4fv(programShader.pMatrix, false, pMatrix);
+				for(var a=0;a<lines.length;a++){
+					var line=lines[a];
+					var timeDiff=currentDate-line.time;
+					if(timeDiff>5000){
+						lines.splice(a, 1);
+						a--;
+						continue;
+					}
+					mVMatrix=mat4.clone(line.rotate);
+					mat4.translate(mVMatrix, mVMatrix, [timeDiff, 0, 0]);
+					mat4.scale(mVMatrix, mVMatrix, line.size);
+					gl.uniformMatrix4fv(programShader.mVMatrix, false, mVMatrix);
+					gl.uniform3fv(programShader.color, line.color);
+					gl.drawElements(gl.TRIANGLES, vertexIndex.length, gl.UNSIGNED_SHORT, 0);
+				}
+				gl.bindTexture(gl.TEXTURE_2D, texture);
+				gl.generateMipmap(gl.TEXTURE_2D);
+				gl.bindTexture(gl.TEXTURE_2D, null);
+				gl.disableVertexAttribArray(programShader.vertexPositionAttribute);
+				
+				gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+				gl.viewport(0, 0, width, height);
+				gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+				gl.useProgram(postPS);
+				gl.enableVertexAttribArray(postPS.vertexPositionAttribute);
+				gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+				gl.vertexAttribPointer(postPS.vertexPositionAttribute, 3, gl.FLOAT, false, 0, 0);
+				gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+				gl.activeTexture(gl.TEXTURE0);
+				gl.bindTexture(gl.TEXTURE_2D, texture);
+				gl.uniform1i(postPS.samplerUniform, 0);
+				gl.uniform1f(postPS.intensity, Math.sin(-(currentDate-startDate)/2000)*2*Math.PI*0.5);
+				mVMatrix=mat4.create();
+				if(width>height){
+					mat4.scale(mVMatrix, mVMatrix, [1, height/width, 1]);
+				}else{
+					mat4.scale(mVMatrix, mVMatrix, [width/height, 1, 1]);
+				}
+				gl.uniformMatrix4fv(postPS.mVMatrix, false, mVMatrix);
+				gl.drawElements(gl.TRIANGLES, vertexIndex.length, gl.UNSIGNED_SHORT, 0);
+				gl.disableVertexAttribArray(postPS.vertexPositionAttribute);
+
+				if(lines.length>1000){
+					lines.splice(0, 100);
+				}
+				var rand=Math.random()*4;
+				for(var a=0;a<rand;a++){
+					lines.push(new Line());
+				}
+				window.requestAnimationFrame(draw);
+				//console.log(lines.length);
+			}
+
+			function Line(){
+				this.color=[];
+				this.size=[Math.random()*40+50, Math.random()*0.1+0.05, 1];
+				this.roundAngle=Math.random()*2*Math.PI;
+				var rand=Math.random();
+				if(rand>0.7){
+					this.position=Math.random()*100+200;
+					this.size[1]*=this.position*0.06;
+				}else if(rand >0.3){
+					this.position=Math.random()*100+50;
+					this.size[1]*=this.position*0.06;
+				}else{
+					this.position=Math.random()*50+1;
+					this.size[1]*=this.position*0.15;
+				}
+				if(colorMode==0){
+					this.color=[Math.random(), Math.random(), Math.random()];
+				}else if(colorMode==1){
+					var hsl=[this.roundAngle/Math.PI*180, 0.5, 0.5];
+					this.color=hsl2rgb(hsl);
+				}else if(colorMode==2){
+					var hsl=[this.position/5*6, 0.5, 0.5];
+					this.color=hsl2rgb(hsl);
+				}
+				this.rotate=mat4.identity(mat4.create());
+				mat4.translate(this.rotate, this.rotate, [0, 0, -2000]);
+				mat4.rotate(this.rotate, this.rotate, this.roundAngle, [0, 0, 1]);
+				mat4.translate(this.rotate, this.rotate, [this.position, 0, 0]);
+				mat4.rotate(this.rotate, this.rotate, Math.PI*0.5, [0, -1, 0]);
+				this.time=new Date();
+				
+			}
+
+			function hsl2rgb(hsl){
+				var q;
+				var color=[];
+				if(hsl[2]<0.5){
+					q=l*(1+hsl[1]);
+				}else{
+					q=hsl[2]+hsl[1]-(hsl[2]*hsl[1]);
+				}
+				var p=2*hsl[2]-q;
+				var hk=hsl[0]/360;
+				var t=[hk+1/3, hk, hk-1/3];
+				for(var a=0;a<3;a++){
+					if(t[a]<0){
+						t[a]=t[a]+1;
+					}else if(t[a]>1){
+						t[a]=t[a]-1;
+					}
+					if(t[a]<1/6){
+						color[a]=p+((q-p)*6*t[a]);
+					}else if(t[a]<1/2){
+						color[a]=q;
+					}else if(t[a]<2/3){
+						color[a]=p+((q-p)*6*(2/3-t[a]));
+					}else{
+						color[a]=p;
+					}
+				}
+				return color;
+			}
+
+			function changeColorMode(){
+				colorMode++;
+				if(colorMode>2){
+					colorMode=1;
+				}
+			}
+			setInterval(changeColorMode, 5000);
+			initialize();
+
+		</script>
+	</body>
+</html>

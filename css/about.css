@@ -1,0 +1,111 @@
+#aboutBody{
+  width:1024px;
+  margin:0 auto;
+}
+
+#aboutBody:after{
+  content: "";
+  clear: both;
+  display: block;
+}
+
+#leftContent{
+  width:calc(65% - 20px);
+	margin-right: 20px;
+  float:left;
+}
+
+.card{
+  background: #fff;
+	padding:30px;
+	margin:20px 0;
+	box-shadow:#888 2px 2px 2px;
+  position: relative;
+}
+
+.card:after{
+  position: absolute;
+  width:10px;
+  height:100%;
+  top:0;
+  left:0;
+  background: #00bcd4;
+  content: "";
+}
+
+.title{
+  font-size: 1.5rem;
+  font-weight: 500;
+}
+
+.title:after{
+  display: block;
+	content: "";
+  margin:10px 0;
+	width:100%;
+	border-bottom: #e0e0e0 1px solid;
+}
+
+p{
+  text-indent: 1rem;
+  padding-left: 1rem;
+  text-align: justify;
+  font-weight: 300;
+}
+
+.listInfo {
+  padding-left: 1rem;
+  font-weight: 300;
+}
+
+.listInfo span{
+  list-style: disc;
+  display: list-item;
+  line-height:1rem;
+}
+
+#rightContent{
+  width:35%;
+  float:left;
+}
+
+.person{
+  margin:20px 0 30px;
+}
+
+.personName{
+  font-size: 1.3rem;
+  margin-bottom: 5px;
+}
+
+.personInfo{
+  font-weight: 300;
+  padding:0 0 0 1rem;
+}
+
+.gradeItem{
+  display: inline-block; 
+  font-weight: 400;
+  width:200px;
+  padding:0.5rem 0 0 1rem;
+}
+
+.gradeScore{
+  display: inline-block;
+  font-weight: 300;
+}
+
+#ta .person{
+  margin: 0;
+}
+
+@media screen and (max-width: 1023px){
+  #aboutBody{
+    width:calc(100% - 40px);
+    margin:0 auto;
+  }
+  
+  #leftContent, #rightContent{
+    width:100%;
+  }
+} 

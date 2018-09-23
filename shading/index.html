@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="CACHE-CONTROL" content="NO-CACHE">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>Shading Monkey</title>
+		<style type="text/css">
+			html, body{
+				padding:0;
+				margin:0;
+				height:100%;
+				overflow:hidden;
+			}
+		</style>
+		<script type="text/javascript" src="../js/mat4.js"></script>
+		<script id="noneF" type="x-shader/x-fragment">
+			precision mediump float;
+			varying vec4 color;
+			void main(void){
+				gl_FragColor=color;
+			}
+		</script>
+		<script id="noneV" type="x-shader/x-vertex">
+			attribute vec3 vertexPosition;
+			uniform mat4 pMatrix;
+			uniform mat4 mVMatrix;
+			varying vec4 color;
+			void main(void){
+				vec3 objectColor=vec3(1.0,0.76,0.03);
+				gl_Position=pMatrix*mVMatrix*vec4(vertexPosition, 1.0);
+				color=vec4(objectColor, 1.0);
+			}
+		</script>
+		<script id="flatF" type="x-shader/x-fragment">
+			precision mediump float;
+			varying vec4 color;
+			void main(void){
+				gl_FragColor=color;
+			}
+		</script>
+		<script id="flatV" type="x-shader/x-vertex">
+			attribute vec3 vertexPosition;
+			attribute vec3 vertexNormal;
+			uniform mat4 pMatrix;
+			uniform mat4 mVMatrix;
+			uniform vec3 lightPosition;
+			uniform vec3 lightDir;
+			varying vec4 color;
+			void main(void){
+				vec3 objectColor=vec3(1.0,0.76,0.03);
+				float light;
+				vec3 normal;
+				normal=(mVMatrix*vec4(vertexNormal, 1.0)-mVMatrix*vec4(0.0, 0.0, 0.0, 1.0)).xyz;
+				light=max(0.0, dot(normalize(-lightDir), normalize(normal)));
+				gl_Position=pMatrix*mVMatrix*vec4(vertexPosition, 1.0);
+				color=vec4((light*0.9+0.1)*objectColor, 1.0);
+			}
+		</script>
+		<script id="phongF" type="x-shader/x-fragment">
+			precision mediump float;
+			uniform vec3 lightDir;
+			varying vec4 normal;
+			void main(void){
+				vec3 objectColor=vec3(1.0,0.76,0.03);
+				float light=max(0.0, dot(normalize(-lightDir), normalize(normal.xyz)));
+				gl_FragColor=vec4((light*0.9+0.1)*objectColor, 1.0);;
+			}
+		</script>
+		<script id="phongV" type="x-shader/x-vertex">
+			attribute vec3 vertexPosition;
+			attribute vec3 vertexNormal;
+			uniform mat4 pMatrix;
+			uniform mat4 mVMatrix;
+			uniform vec3 lightPosition;
+			varying vec4 normal;
+			void main(void){
+				normal=(mVMatrix*vec4(vertexNormal, 1.0)-mVMatrix*vec4(0.0, 0.0, 0.0, 1.0));
+				gl_Position=pMatrix*mVMatrix*vec4(vertexPosition, 1.0);
+			}
+		</script>
+		<script src="./monkey.js"></script>
+	</head>
+	<body>
+		<canvas id="canvas" style="width:100%;height:100%;"></canvas>
+		<script type="text/javascript">
+			var canvas=document.getElementById("canvas");
+			var monkeyVertexBuffer, monkeyNormalBuffer, monkeyIndexBuffer;
+			var flatMonkeyIndexBuffer, flatMonkeyNormalBuffer, flatMonkeyVertexBuffer;
+			var flatSP, phongSP, noneSP;
+			var sunShaderProgram;
+			var textures={};
+			var gl;
+			var startDate;
+			function initialize(){
+				gl=canvas.getContext("webgl")||canvas.getContext("experimental-webgl");
+				initialMonkey();
+				initShaders();
+				initBuffers();
+				initTexture();
+				gl.clearColor(0.26, 0.26, 0.26, 1.0);
+				gl.enable(gl.DEPTH_TEST);
+				startDate=new Date();
+				window.requestAnimationFrame(draw);
+			}
+
+			function initShaders(){
+				var fragmentShader=getShader(gl, "flatF", "fragmentShader");
+				var vertexShader=getShader(gl, "flatV", "vertexShader");
+				flatSP=gl.createProgram();
+				gl.attachShader(flatSP, vertexShader);
+				gl.attachShader(flatSP, fragmentShader);
+				gl.linkProgram(flatSP);
+				if(!gl.getProgramParameter(flatSP, gl.LINK_STATUS)){
+					console.log("failed to initialize flatSP shaderProgram.");
+				}
+				flatSP.vertexPositionAttribute=gl.getAttribLocation(flatSP, "vertexPosition");
+				flatSP.vertexNormalAttribute=gl.getAttribLocation(flatSP, "vertexNormal");
+				flatSP.pMatrix=gl.getUniformLocation(flatSP, "pMatrix");
+				flatSP.mVMatrix=gl.getUniformLocation(flatSP, "mVMatrix");
+				flatSP.lightDir=gl.getUniformLocation(flatSP, "lightDir");
+
+				fragmentShader=getShader(gl, "phongF", "fragmentShader");
+				vertexShader=getShader(gl, "phongV", "vertexShader");
+				phongSP=gl.createProgram();
+				gl.attachShader(phongSP, vertexShader);
+				gl.attachShader(phongSP, fragmentShader);
+				gl.linkProgram(phongSP);
+				if(!gl.getProgramParameter(phongSP, gl.LINK_STATUS)){
+					console.log("failed to initialize phongSP shaderProgram.");
+				}
+				phongSP.vertexPositionAttribute=gl.getAttribLocation(phongSP, "vertexPosition");
+				phongSP.vertexNormalAttribute=gl.getAttribLocation(phongSP, "vertexNormal");
+				phongSP.pMatrix=gl.getUniformLocation(phongSP, "pMatrix");
+				phongSP.mVMatrix=gl.getUniformLocation(phongSP, "mVMatrix");
+				phongSP.lightDir=gl.getUniformLocation(phongSP, "lightDir");
+				
+				fragmentShader=getShader(gl, "noneF", "fragmentShader");
+				vertexShader=getShader(gl, "noneV", "vertexShader");
+				noneSP=gl.createProgram();
+				gl.attachShader(noneSP, vertexShader);
+				gl.attachShader(noneSP, fragmentShader);
+				gl.linkProgram(noneSP);
+				if(!gl.getProgramParameter(noneSP, gl.LINK_STATUS)){
+					console.log("failed to initialize noneSP shaderProgram.");
+				}
+				noneSP.vertexPositionAttribute=gl.getAttribLocation(noneSP, "vertexPosition");
+				noneSP.pMatrix=gl.getUniformLocation(noneSP, "pMatrix");
+				noneSP.mVMatrix=gl.getUniformLocation(noneSP, "mVMatrix");
+			}
+
+			function getShader(gl ,id, shaderType){
+				var shaderScript = document.getElementById(id);
+     			if (!shaderScript) {
+        			return null;
+				}
+				var str="";
+				var a=shaderScript.firstChild;
+				while(a){
+					if(a.nodeType==3){
+						str+=a.textContent;
+					}
+					a=a.nextSibling;
+				}
+				var shader;
+				if(shaderType=="fragmentShader"){
+					shader = gl.createShader(gl.FRAGMENT_SHADER);
+				}else if(shaderType=="vertexShader"){
+					shader = gl.createShader(gl.VERTEX_SHADER);
+				}else{
+					return null;
+				}
+				gl.shaderSource(shader, str);
+				gl.compileShader(shader);
+				if(!gl.getShaderParameter(shader, gl.COMPILE_STATUS)){
+					console.log(gl.getShaderInfoLog(shader));
+					return null;
+				}
+				return shader;
+			}
+
+			function initBuffers(){
+				monkeyVertexBuffer=gl.createBuffer();
+				gl.bindBuffer(gl.ARRAY_BUFFER, monkeyVertexBuffer);
+				gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(monkeyVertex),gl.STATIC_DRAW);
+				monkeyNormalBuffer=gl.createBuffer();
+				gl.bindBuffer(gl.ARRAY_BUFFER, monkeyNormalBuffer);
+				gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(monkeyNormal), gl.STATIC_DRAW);
+				monkeyIndexBuffer=gl.createBuffer();
+				gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, monkeyIndexBuffer);
+				gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(monkeyVertexIndex), gl.STATIC_DRAW);
+				flatMonkeyVertexBuffer=gl.createBuffer();
+				gl.bindBuffer(gl.ARRAY_BUFFER, flatMonkeyVertexBuffer);
+				gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(monkeyFlatVertex),gl.STATIC_DRAW);
+				flatMonkeyNormalBuffer=gl.createBuffer();
+				gl.bindBuffer(gl.ARRAY_BUFFER, flatMonkeyNormalBuffer);
+				gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(monkeyFlatNormal), gl.STATIC_DRAW);
+				flatMonkeyIndexBuffer=gl.createBuffer();
+				gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, flatMonkeyIndexBuffer);
+				gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(monkeyFlatVertexIndex), gl.STATIC_DRAW);
+			}
+
+			function initTexture(){
+			}
+
+			function loadTexture(texture){
+				textures[texture]=gl.createTexture();
+				textures[texture].image=new Image();
+				textures[texture].image.onload=function(){
+					handleTexture(texture);
+				}.bind(this);
+				gl.bindTexture(gl.TEXTURE_2D, textures[texture]);
+				gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([125, 125, 125,255]));
+				textures[texture].image.src="./"+texture+".png";
+			}
+
+			function handleTexture(texture){
+				var temp=textures[texture];
+				gl.bindTexture(gl.TEXTURE_2D, temp);
+				gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+				gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, temp.image);
+				if(isPowerOfTwo(temp.image.width)&&isPowerOfTwo(temp.image.height)){
+					gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+					gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+					gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+					gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+				}else{
+					gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+					gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+					gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+				}
+				gl.bindTexture(gl.TEXTURE_2D, null);
+				
+			}
+
+			function isPowerOfTwo(i){
+				return (i&(i-1))==0;
+			}
+
+			function draw(){
+				var centerZ=0.0;
+				var devicePixelRatio=window.devicePixelRatio||1;
+				var width = gl.canvas.clientWidth*devicePixelRatio;
+				var height = gl.canvas.clientHeight*devicePixelRatio;
+				var currentDate=new Date();
+				var lightDir=[-1, 0, -1];
+				var mVMatrix;
+				gl.canvas.width=width;
+				gl.canvas.height=height;
+				gl.viewport(0, 0, width, height);
+				gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+				
+				var pMatrix=mat4.perspective(mat4.create(), Math.PI/10, width/height, 0.1, 10000);
+				mat4.translate(pMatrix, pMatrix, [0, 0, -20]);
+
+				gl.useProgram(noneSP);
+				gl.enableVertexAttribArray(noneSP.vertexPositionAttribute);
+				mVMatrix=mat4.identity(mat4.create());
+				gl.bindBuffer(gl.ARRAY_BUFFER, monkeyVertexBuffer);
+				gl.vertexAttribPointer(noneSP.vertexPositionAttribute, 3, gl.FLOAT, false, 0, 0);
+				gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, monkeyIndexBuffer);
+				gl.uniformMatrix4fv(noneSP.pMatrix, false, pMatrix);
+				mat4.translate(mVMatrix, mVMatrix, [-2, 1.5, centerZ]);
+				mat4.rotate(mVMatrix, mVMatrix, (currentDate- startDate)/1000*Math.PI/25, [0, 1, 0]);
+				gl.uniformMatrix4fv(noneSP.mVMatrix, false, mVMatrix);
+				gl.drawElements(gl.TRIANGLES, monkeyVertexIndex.length, gl.UNSIGNED_SHORT, 0);
+				gl.disableVertexAttribArray(noneSP.vertexPositionAttribute);
+				
+				gl.useProgram(flatSP);
+				gl.enableVertexAttribArray(flatSP.vertexPositionAttribute);
+				gl.enableVertexAttribArray(flatSP.vertexNormalAttribute);
+				mVMatrix=mat4.identity(mat4.create());
+				gl.bindBuffer(gl.ARRAY_BUFFER, flatMonkeyVertexBuffer);
+				gl.vertexAttribPointer(flatSP.vertexPositionAttribute, 3, gl.FLOAT, false, 0, 0);
+				gl.bindBuffer(gl.ARRAY_BUFFER, flatMonkeyNormalBuffer);
+				gl.vertexAttribPointer(flatSP.vertexNormalAttribute, 3, gl.FLOAT, false, 0, 0)
+				gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, flatMonkeyIndexBuffer);
+				gl.uniform3fv(flatSP.lightDir, lightDir);
+				gl.uniformMatrix4fv(flatSP.pMatrix, false, pMatrix);
+				mat4.translate(mVMatrix, mVMatrix, [2, 1.5, centerZ]);
+				mat4.rotate(mVMatrix, mVMatrix, (currentDate- startDate)/1000*Math.PI/25, [0, 1, 0]);
+				gl.uniformMatrix4fv(flatSP.mVMatrix, false, mVMatrix);
+				gl.drawElements(gl.TRIANGLES, monkeyFlatVertexIndex.length, gl.UNSIGNED_SHORT, 0);
+
+				mVMatrix=mat4.identity(mat4.create());
+				gl.bindBuffer(gl.ARRAY_BUFFER, monkeyVertexBuffer);
+				gl.vertexAttribPointer(flatSP.vertexPositionAttribute, 3, gl.FLOAT, false, 0, 0);
+				gl.bindBuffer(gl.ARRAY_BUFFER, monkeyNormalBuffer);
+				gl.vertexAttribPointer(flatSP.vertexNormalAttribute, 3, gl.FLOAT, false, 0, 0)
+				gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, monkeyIndexBuffer);
+				gl.uniform3fv(flatSP.lightDir, lightDir);
+				gl.uniformMatrix4fv(flatSP.pMatrix, false, pMatrix);
+				mat4.translate(mVMatrix, mVMatrix, [-2, -1.5, centerZ]);
+				mat4.rotate(mVMatrix, mVMatrix, (currentDate- startDate)/1000*Math.PI/25, [0, 1, 0]);
+				gl.uniformMatrix4fv(flatSP.mVMatrix, false, mVMatrix);
+				gl.drawElements(gl.TRIANGLES, monkeyVertexIndex.length, gl.UNSIGNED_SHORT, 0);
+				gl.disableVertexAttribArray(flatSP.vertexPositionAttribute);				
+				gl.disableVertexAttribArray(flatSP.vertexNormalAttribute);				
+
+				gl.useProgram(phongSP);
+				gl.enableVertexAttribArray(phongSP.vertexPositionAttribute);
+				gl.enableVertexAttribArray(phongSP.vertexNormalAttribute);
+				mVMatrix=mat4.identity(mat4.create());
+				gl.bindBuffer(gl.ARRAY_BUFFER, monkeyVertexBuffer);
+				gl.vertexAttribPointer(phongSP.vertexPositionAttribute, 3, gl.FLOAT, false, 0, 0);
+				gl.bindBuffer(gl.ARRAY_BUFFER, monkeyNormalBuffer);
+				gl.vertexAttribPointer(phongSP.vertexNormalAttribute, 3, gl.FLOAT, false, 0, 0)
+				gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, monkeyIndexBuffer);
+				gl.uniform3fv(phongSP.lightDir, lightDir);
+				gl.uniformMatrix4fv(phongSP.pMatrix, false, pMatrix);
+				mat4.translate(mVMatrix, mVMatrix, [2, -1.5, centerZ]);
+				mat4.rotate(mVMatrix, mVMatrix, (currentDate- startDate)/1000*Math.PI/25, [0, 1, 0]);
+				gl.uniformMatrix4fv(phongSP.mVMatrix, false, mVMatrix);
+				gl.drawElements(gl.TRIANGLES, monkeyVertexIndex.length, gl.UNSIGNED_SHORT, 0);
+				gl.disableVertexAttribArray(phongSP.vertexPositionAttribute);				
+				gl.disableVertexAttribArray(phongSP.vertexNormalAttribute);
+
+				window.requestAnimationFrame(draw);
+			}
+
+			initialize();
+
+		</script>
+	</body>
+</html>

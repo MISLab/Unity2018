@@ -1,0 +1,99 @@
+header li html, body, header, ul{
+	margin:0;padding:0;
+}
+
+html{
+	background: #ccc;
+	font-family: 'Roboto', sans-serif, '黑體';
+}
+
+body{
+	min-width: 1024px;
+}
+
+a{
+  text-decoration:none;
+	color:#fff;
+}
+
+header{
+	background: #555;
+}
+
+header ul{
+	width:1024px;
+	margin:0 auto;
+}
+
+header li{
+	display: inline-block;
+	font-weight: 500;
+	position:relative;
+	transition: background ease 0.25s;
+}
+
+header li:hover{
+	background:#303030;
+}
+
+header>ul>span{
+	float: right;
+}
+
+header li a{
+	display: inline-block;
+	padding:15px 20px;
+}
+
+header li a:after{
+	width:100%;
+	display: inline-block;
+	height:5px;
+	position: absolute;
+	bottom:0px;
+	left:0;
+	content: "";
+	transition: background ease 0.25s;
+
+}
+
+header li a:hover:after{
+	background: #2196f3;
+}
+
+#navigatorButton{
+	display: none;
+}
+
+#backgroundfalse{
+	display: none;
+}
+
+#currentPage{
+	background: #212121;
+}
+
+#currentPage:after{
+	background: #ff9800;
+}
+
+footer{
+	background: #fafafa;
+}
+
+footer a{
+	color:#000;
+}
+
+#footerBody{
+	width:1024px;
+	padding:20px 0;
+	margin:0 auto;
+	text-align: center;
+}
+
+#footerBody div{
+	padding: 3px;
+	font-size: 0.7rem;
+	font-weight: 300;
+}
