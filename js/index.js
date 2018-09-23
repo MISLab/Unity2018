@@ -5,7 +5,7 @@ var courseInfo=[
 var announcement=[
 	"請各位同學務必攜帶自己的筆電並安裝好以下軟體（要下載很久所以請務必先安裝好）：",
 	"　",
-	"1. Unity ",
+	"1. Unity (https://store.unity.com/download?ref=personal)",
 	"　",
 	"2. QuickTime (https://support.apple.com/downloads/quicktime)",
 ];
