@@ -1,5 +1,5 @@
 var weekNum=1;
-var courseTitle="Scene & Basic Script Control";
+var courseTitle="";
 var courseInfo=[
 	"09 / 25 (Tue.) 18:00 ~ 21:00"
 ];
