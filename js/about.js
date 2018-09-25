@@ -124,6 +124,10 @@ var TAs = React.createClass({
 			),
 			React.createElement(
 				Person,
+				{name:"蔡菀倫"}
+			),
+			React.createElement(
+				Person,
 				{name:"陳建文"}
 			),
 			React.createElement(

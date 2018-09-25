@@ -1,7 +1,8 @@
 var weekNum=1;
-var courseTitle="";
+var courseTitle="Introduction to Unity & C#";
 var courseInfo=[
-	"09 / 25 (Tue.) 18:00 ~ 21:00"
+	"09 / 25 (Tue.) 18:00 ~ 21:00",
+	"R65304, 3F, CSIE New Building"
 ];
 var announcement=[
 	"請各位同學務必攜帶自己的筆電並安裝好以下軟體（要下載很久所以請務必先安裝好）：",
