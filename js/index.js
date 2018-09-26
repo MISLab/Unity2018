@@ -1,22 +1,36 @@
-var weekNum=1;
-var courseTitle="Introduction to Unity & C#";
+var timeInfo = [
+	"09 / 25 (Tue.) 18 : 00 ~ 21 : 00 - Introduction to Unity & C#",
+	"09 / 27 (Thu.) 18 : 00 ~ 21 : 00 - Scene & Basic Script Control",
+	"09 / 29 (Sat.) 09 : 00 ~ 12 : 00 - UI Development",
+	"09 / 29 (Sat.) 14 : 00 ~ 17 : 00 - 2D Game Development",
+	"10 / 02 (Tue.) 18 : 00 ~ 21 : 00 - FPS Game Development",
+	"10 / 14 (Sun.) 14 : 00 ~ 17 : 00 - Project Demo"
+];
+
+var courseTitle="Scene & Basic Script Control";
 var courseInfo=[
-	"09 / 25 (Tue.) 18:00 ~ 21:00",
+	"09 / 27 (Thu.) 18:00 ~ 21:00",
 	"R65304, 3F, CSIE New Building"
 ];
+
 var announcement=[
 	"請各位同學務必攜帶自己的筆電並安裝好以下軟體（要下載很久所以請務必先安裝好）：",
 	"　",
 	"1. Unity (https://store.unity.com/download?ref=personal)",
 	"　",
 	"2. QuickTime (https://support.apple.com/downloads/quicktime)",
+	"　",
+	"　",
+	"　",
+	"　"
 ];
+
 var title = [
 	/*{id:"final", mainTitle:"Final Presentation", subTopic:"2016.06.28", img:"./art/final.png"},*/
 	{id:"unity", mainTitle:"Unity", subTopic:"2018", img:"./art/title_unity.png"},
 	//{id:"hw1", mainTitle:"Homework 1", subTopic:"Final Project Proposal", img:"./art/unity-android.png", href:"./homework1.html"},
 	//{id:"hw2", mainTitle:"Homework 2", subTopic:"Unity 2D Animation", img:"./art/hw2.png", href:"./homework2.html"}
-]
+];
 
 var titleCount=title.length;
 var currentTitle=0;
@@ -99,24 +113,51 @@ var Title=React.createClass({
 
 var Info=React.createClass({
 	render:function(){
+		var timeInfoEle=[];
+		for(var a in timeInfo){
+			timeInfoEle.push(React.createElement("div", null, timeInfo[a]));
+		}
+
 		var courseInfoEle=[];
 		for(var a in courseInfo){
 			courseInfoEle.push(React.createElement("div", null, courseInfo[a]));
 		}
+
 		var announcementEle=[];
 		for(var a in announcement){
 			announcementEle.push(React.createElement("div", null, announcement[a]));
 		}
+
 		return React.createElement(
 			"div",
 			{id:"infoBody"},
+
 			React.createElement(
 				"div",
 				{id:"nextLecture", className:"infoEle"},
+
+				React.createElement(
+					"div",
+					{id:"timeInfo"},
+					React.createElement(
+						"div",
+						{className:"courseTitle"},
+						"Schedule"
+					),
+					React.createElement(
+						"div",
+						{className:"courseInfo"},
+						timeInfoEle
+					)
+				),
+
+				React.createElement("br"),
+				React.createElement("br"),
+
 				React.createElement(
 					"div",
 					{className:"week"},
-					"Week "+weekNum
+					"Lecture 2"
 				),
 				React.createElement(
 					"div",
@@ -129,6 +170,7 @@ var Info=React.createClass({
 					courseInfoEle
 				)
 			),
+
 			React.createElement(
 				"div",
 				{id:"announcement", className:"infoEle"},
@@ -146,8 +188,6 @@ var Info=React.createClass({
 		);
 	}
 });
-
-
 
 var Main = React.createClass({
 	render: function() {
