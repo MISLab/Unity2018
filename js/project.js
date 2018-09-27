@@ -1,5 +1,5 @@
 var presentations=[
-	/*{title:"Group 1: Shape Segmentation by Approximate Convexity Analysis", img:"./art/pst_1.png", file:"https://youtu.be/vAn2g0Gotso"},*/	
+	{title:"Final Project Description", img:"./art/week1_1.png", file:"https://drive.google.com/file/d/1RSfIHyCqX6au_kwuAYGBOFPVVLAwdA0g/view"}
 ];
 
 var Presentation=React.createClass({
