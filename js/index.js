@@ -7,9 +7,10 @@ var timeInfo = [
 	"10 / 14 (Sun.) 14 : 00 ~ 17 : 00 - Project Demo"
 ];
 
-var courseTitle="Scene & Basic Script Control";
-var courseInfo=[
-	"09 / 27 (Thu.) 18:00 ~ 21:00",
+var lectureStr = "Lecture 3";
+var courseTitle = "UI & 2D Game Development";
+var courseInfo = [
+	"09 / 29 (Sat.) 09:00 ~ 12:00 , 14:00 ~ 17:00",
 	"R65304, 3F, CSIE New Building"
 ];
 
@@ -157,7 +158,7 @@ var Info=React.createClass({
 				React.createElement(
 					"div",
 					{className:"week"},
-					"Lecture 2"
+					lectureStr
 				),
 				React.createElement(
 					"div",
