@@ -1,7 +1,7 @@
 var lectures = [
-	{ title: "Lecture 1 : Introduction to Unity & C#", img: "./art/week1_1.png", slideshow: "https://drive.google.com/drive/u/1/folders/1iOBuMKMFBp4a_D_zIZJOczFunRX8lDfr?ogsrc=32", video: "" },
+	{ title: "Lecture 1 : Introduction to Unity & C#", img: "./art/week1_1.png", slideshow: "https://drive.google.com/drive/folders/1yrsa7OV3NQMOJwt4G84rO8xshy6Wu6d9", video: "" },
 	{ title: "Lecture 2 : Scene & Basic Script Control", img: "./art/week1_1.png", slideshow: "https://drive.google.com/drive/folders/1qhhO8wX5n5sx7rKV4JJ1-Bj7jdY367iD?usp=sharing", video: "" },
-	{ title: "Lecture 3 : UI & 2D Game Development", img: "./art/week1_1.png", slideshow: "", video: "" }
+	{ title: "Lecture 3 : UI & 2D Game Development", img: "./art/week1_1.png", slideshow: "https://drive.google.com/drive/folders/10CJJOf2egGBDgI9VGXAqvNaX3NpCq4dO", video: "" }
     //{ title: "Week 1 Afternoon: UI & Framework & IO of Unity", img: "./art/week1_2.jpg", slideshow: "https://drive.google.com/drive/folders/1t8DBTIkhPngyvW-4E8aauTdjE93i-Dkp?usp=sharing", video: "https://youtu.be/P3cT9mnVmw0" },
     //{ title: "Week 2 Morning: 2D Game Design", img: "./art/week2_1.jpg", slideshow: "https://drive.google.com/drive/u/1/folders/1Y11uizGPH16g3wzjThWrSzX_ND9KXkFj", video: "https://youtu.be/e-BnlTutzuQ" },
     //{ title: "Week 2 Afternoon: UI Design", img: "./art/week2_2.jpg", slideshow: "https://drive.google.com/drive/u/1/folders/1Y11uizGPH16g3wzjThWrSzX_ND9KXkFj", video: "https://youtu.be/hOwHyOFNACU" },
