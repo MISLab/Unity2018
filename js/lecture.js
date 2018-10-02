@@ -2,7 +2,8 @@ var lectures = [
 	{ title: "Lecture 1 : Introduction to Unity & C#", img: "./art/week1_1.png", slideshow: "https://drive.google.com/drive/folders/1yrsa7OV3NQMOJwt4G84rO8xshy6Wu6d9", video: "" },
 	{ title: "Lecture 2 : Scene & Basic Script Control", img: "./art/week1_1.png", slideshow: "https://drive.google.com/drive/folders/1qhhO8wX5n5sx7rKV4JJ1-Bj7jdY367iD?usp=sharing", video: "https://youtu.be/8DnA5Y_WSL0" },
 	{ title: "Lecture 3 : UI & 2D Game Development", img: "./art/week1_1.png", slideshow: "https://drive.google.com/drive/folders/10CJJOf2egGBDgI9VGXAqvNaX3NpCq4dO", video: "" },
-    { title: "Lecture 4 : FPS Game Development", img: "./art/week1_1.png", slideshow: "https://drive.google.com/drive/folders/1Z_Pkh5zOerEWsOYMW-aaf7q_9Gy1qXGg?usp=sharing", video: "" }
+    { title: "Lecture 4 : FPS Game Development", img: "./art/week1_1.png", slideshow: "https://drive.google.com/drive/folders/1Z_Pkh5zOerEWsOYMW-aaf7q_9Gy1qXGg?usp=sharing", video: "" },
+    { title: "Unity Building Guide for Android", img: "./art/week1_1.png", slideshow: "https://drive.google.com/drive/folders/1Kfi0EOj6-fSaITgGZpFrHp1nHvrY5B8U?usp=sharing", video: "" }
 ]
 
 var Lecture = React.createClass({
