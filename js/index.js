@@ -7,10 +7,10 @@ var timeInfo = [
 	"10 / 14 (Sun.) 14 : 00 ~ 17 : 00 - Project Demo"
 ];
 
-var lectureStr = "Lecture 4";
-var courseTitle = "FPS Game Development";
+var lectureStr = "Final Project";
+var courseTitle = "Project Demo";
 var courseInfo = [
-	"10 / 02 (Tue.) 18:00 ~ 21:00",
+	"10 / 14 (Sun.) 14:00 ~ 17:00",
 	"R65304, 3F, CSIE New Building"
 ];
 
